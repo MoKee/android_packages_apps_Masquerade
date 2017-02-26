@@ -1,43 +1,39 @@
+<!--suppress AndroidUnknownAttribute -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          xmlns:tools="http://schemas.android.com/tools"
+          coreApp="true"
           package="masquerade.substratum"
-          android:versionCode="20"
-          android:versionName="twenty - procyon">
+          android:sharedUserId="android.uid.system"
+          android:versionCode="24"
+          android:versionName="twenty four"
+          tools:ignore="GradleOverrides">
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.CHANGE_CONFIGURATION"/>
+    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS_FULL"/>
+    <uses-permission
+        android:name="android.permission.FORCE_STOP_PACKAGES"
+        tools:ignore="ProtectedPermissions"/>
+    <uses-permission
+        android:name="android.permission.DELETE_PACKAGES"
+        tools:ignore="ProtectedPermissions"/>
+    <uses-permission
+        android:name="android.permission.INSTALL_PACKAGES"
+        tools:ignore="ProtectedPermissions"/>
+    <uses-permission android:name="android.permission.INSTALL_GRANT_RUNTIME_PERMISSIONS"/>
+    <uses-permission android:name="android.permission.MODIFY_OVERLAYS"/>
 
     <application
-        android:allowBackup="true"
-        android:icon="@mipmap/substratum_masquerade"
-        android:label="@string/app_name"
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="masquerade"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
-        <receiver android:name="masquerade.substratum.services.BootDetector">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED"/>
-            </intent-filter>
-        </receiver>
-        <receiver android:name=".services.UninstallDetector">
-            <intent-filter>
-                <action android:name="android.intent.action.PACKAGE_REMOVED"/>
-                <data android:scheme="package"/>
-            </intent-filter>
-        </receiver>
-        <receiver android:name=".util.Helper">
-            <intent-filter>
-                <action android:name="masquerade.substratum.COMMANDS"/>
-            </intent-filter>
-        </receiver>
-
-        <activity android:name="masquerade.substratum.activities.LoaderActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <action android:name="masquerade.substratum.INITIALIZE"/>
-
-                <category android:name="android.intent.category.DEFAULT"/>
-            </intent-filter>
-        </activity>
+        android:theme="@android:style/Theme.NoDisplay"
+        tools:ignore="GoogleAppIndexingWarning">
+        <service
+            android:name=".services.JobService"
+            android:exported="true"
+            android:permission="android.permission.MODIFY_OVERLAYS"/>
     </application>
 </manifest>
