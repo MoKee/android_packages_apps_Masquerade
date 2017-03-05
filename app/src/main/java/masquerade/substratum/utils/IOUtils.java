@@ -35,6 +35,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class IOUtils {
+    private static final String TAG = IOUtils.class.getSimpleName();
     public static final String SYSTEM_THEME_PATH = "/data/system/theme";
     public static final String SYSTEM_THEME_FONT_PATH = SYSTEM_THEME_PATH + File.separator
             + "fonts";
@@ -53,16 +54,19 @@ public class IOUtils {
 
     private static boolean dirExists(String dirPath) {
         final File dir = new File(dirPath);
+
         return dir.exists() && dir.isDirectory();
     }
 
     public static void createDirIfNotExists(String dirPath) {
-        if (!dirExists(dirPath)) {
-            File dir = new File(dirPath);
-            if (dir.mkdir()) {
-                setPermissions(dir, FileUtils.S_IRWXU | FileUtils.S_IRWXG |
-                        FileUtils.S_IROTH | FileUtils.S_IXOTH);
-            }
+        if (dirExists(dirPath)) {
+            return;
+        }
+
+        File dir = new File(dirPath);
+        if (dir.mkdir()) {
+            setPermissions(dir, FileUtils.S_IRWXU | FileUtils.S_IRWXG |
+                    FileUtils.S_IROTH | FileUtils.S_IXOTH);
         }
     }
 
@@ -78,27 +82,11 @@ public class IOUtils {
         createDirIfNotExists(SYSTEM_THEME_AUDIO_PATH);
     }
 
-    public static void createRingtoneDirIfNotExists() {
-        createDirIfNotExists(SYSTEM_THEME_RINGTONE_PATH);
-    }
-
-    public static void createNotificationDirIfNotExists() {
-        createDirIfNotExists(SYSTEM_THEME_NOTIFICATION_PATH);
-    }
-
-    public static void createAlarmDirIfNotExists() {
-        createDirIfNotExists(SYSTEM_THEME_ALARM_PATH);
-    }
-
-    public static void createUiSoundsDirIfNotExists() {
-        createDirIfNotExists(SYSTEM_THEME_UI_SOUNDS_PATH);
-    }
-
     public static void deleteThemedFonts() {
         try {
             deleteRecursive(new File(SYSTEM_THEME_FONT_PATH));
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "", e);
         }
     }
 
@@ -106,15 +94,18 @@ public class IOUtils {
         try {
             deleteRecursive(new File(SYSTEM_THEME_AUDIO_PATH));
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "", e);
         }
     }
 
     public static void copyFolder(File source, File dest) {
         if (!dest.exists()) {
             boolean created = dest.mkdirs();
-            if (!created) Log.e("CopyFolder", "Could not create destination folder...");
+            if (!created) {
+                Log.e(TAG, "Could not create destination folder...");
+            }
         }
+
         File[] files = source.listFiles();
         for (File file : files) {
             try {
@@ -126,7 +117,7 @@ public class IOUtils {
                     copyFolder(file, newFile);
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.e(TAG, "", e);
             }
         }
     }
@@ -141,21 +132,28 @@ public class IOUtils {
             ZipEntry zipEntry;
             int count;
             byte[] buffer = new byte[8192];
+
             while ((zipEntry = inputStream.getNextEntry()) != null) {
                 File file = new File(destination, zipEntry.getName());
                 File dir = zipEntry.isDirectory() ? file : file.getParentFile();
-                if (!dir.isDirectory() && !dir.mkdirs())
+
+                if (!dir.isDirectory() && !dir.mkdirs()) {
                     throw new FileNotFoundException("Failed to ensure directory: " +
                             dir.getAbsolutePath());
-                if (zipEntry.isDirectory())
+                }
+
+                if (zipEntry.isDirectory()) {
                     continue;
+                }
+
                 try (FileOutputStream outputStream = new FileOutputStream(file)) {
-                    while ((count = inputStream.read(buffer)) != -1)
+                    while ((count = inputStream.read(buffer)) != -1) {
                         outputStream.write(buffer, 0, count);
+                    }
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "", e);
         }
     }
 
@@ -163,7 +161,7 @@ public class IOUtils {
         try {
             bufferedCopy(new FileInputStream(source), new FileOutputStream(dest));
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "", e);
         }
     }
 
@@ -171,7 +169,7 @@ public class IOUtils {
         try {
             bufferedCopy(new FileInputStream(source), new FileOutputStream(dest));
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "", e);
         }
     }
 
@@ -181,25 +179,31 @@ public class IOUtils {
             BufferedOutputStream out = new BufferedOutputStream(dest);
             byte[] buff = new byte[32 * 1024];
             int len;
+
             // Let's bulletproof this a bit
             while ((len = in.read(buff)) != -1) {
                 out.write(buff, 0, len);
             }
+
             in.close();
             out.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "", e);
         }
     }
 
     public static void deleteRecursive(File fileOrDirectory) {
-        if (fileOrDirectory.isDirectory())
-            for (File child : fileOrDirectory.listFiles())
+        if (fileOrDirectory.isDirectory()) {
+            for (File child : fileOrDirectory.listFiles()) {
                 deleteRecursive(child);
+            }
+        }
 
         boolean deleted = fileOrDirectory.delete();
-        if (!deleted) Log.e("DeleteRecursive", "Could not delete file or directory - \'" +
-                fileOrDirectory.getName() + "\'");
+        if (!deleted) {
+            Log.e(TAG, "Could not delete file or directory - \'" +
+                    fileOrDirectory.getName() + "\'");
+        }
     }
 
     public static void setPermissions(File path, int permissions) {
@@ -207,18 +211,20 @@ public class IOUtils {
     }
 
     public static void setPermissionsRecursive(File dir, int file, int folder) {
-        if (dir.isDirectory()) {
-            for (File child : dir.listFiles()) {
-                if (child.isDirectory()) {
-                    setPermissionsRecursive(child, file, folder);
-                    setPermissions(child, folder);
-                } else {
-                    setPermissions(child, file);
-                }
-            }
-            setPermissions(dir, folder);
-        } else {
+        if (!dir.isDirectory()) {
             setPermissions(dir, file);
+            return;
         }
+
+        for (File child : dir.listFiles()) {
+            if (child.isDirectory()) {
+                setPermissionsRecursive(child, file, folder);
+                setPermissions(child, folder);
+            } else {
+                setPermissions(child, file);
+            }
+        }
+
+        setPermissions(dir, folder);
     }
 }
